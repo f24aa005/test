@@ -27,21 +27,61 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static var _message = 'ok.';
     @override
     Widget build(BuildContext context) {
-      return new Scaffold(
-        appBar: new AppBar(
-          title: new Text('App Name'),
+      return  Scaffold(
+        appBar:  AppBar(
+          title:  Text('App Name'),
           ),
-        body:
-          new Text(
-          "Hello Flutter!",
-            style: new TextStyle(fontSize:32.0,
-            color: const Color(0xFF000000),
-            fontWeight: FontWeight.w700,
-            fontFamily: "Roboto"),
-          ),
-    
+        body:Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                _message,
+                style: TextStyle(
+                  fontSize: 32.0,
+                  fontWeight: FontWeight.w400,
+                  fontFamily:"Roboto",),
+              ),
+            
+
+          Padding(
+            padding:EdgeInsets.all(10.0) ,
+            ),
+
+            Padding(
+              padding:EdgeInsets.all(10.0) ,
+              child: ElevatedButton(
+                onPressed:buttonPressed,
+                child: Text(
+                  "tap me!",
+                  style: TextStyle(fontSize:32.0,
+                  color: const Color(0xff000000),
+                  fontWeight: FontWeight.w400,
+                  fontFamily: "Roboto"),
+                  )
+              )
+            ),
+            ],
+        ),
+        ),
+      );
+    }
+
+    void buttonPressed(){
+      showDialog(
+        context:context,
+        builder: (BuildContext context) => AlertDialog(
+          title: Text("Hello!"),
+          content: Text("This is sample."),
+        )
       );
     }
 }
+     
+              
+
+             
+              
