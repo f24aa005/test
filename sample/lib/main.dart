@@ -28,74 +28,69 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   static var _message = 'ok.';
+  static var _stars = '☆☆☆☆☆';
+  static var _star = 0;
     @override
     Widget build(BuildContext context) {
       return  Scaffold(
         appBar:  AppBar(
-          title:  Text('App Name'),
+          title:  Text('My App'),
+          leading: BackButton(
+            color: Colors.white,
           ),
-        body:Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                _message,
-                style: TextStyle(
-                  fontSize: 32.0,
-                  fontWeight: FontWeight.w400,
-                  fontFamily:"Roboto",),
+
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.android),
+              tooltip: 'add star...',
+              onPressed: iconPressedA,
               ),
-            
-
-          Padding(
-            padding:EdgeInsets.all(10.0) ,
+             IconButton(
+              icon: Icon(Icons.favorite),
+              tooltip: 'subtract star...',
+              onPressed: iconPressedB,
+              ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(30.0),
+            child: Center(
+              child: Text(_stars,
+                style: TextStyle(
+                  fontSize: 22.0,
+                  color: Colors.white,
+                  ),
+                ),
+              ),
             ),
+        ),
 
-            Padding(
-              padding:EdgeInsets.all(10.0) ,
-              child: ElevatedButton(
-                onPressed:buttonPressed,
-                child: Text(
-                  "tap me!",
-                  style: TextStyle(fontSize:32.0,
-                  color: const Color(0xff000000),
-                  fontWeight: FontWeight.w400,
-                  fontFamily: "Roboto"),
-                  )
-              )
+        body: Center(
+          child: Text(
+            _message,
+            style: const TextStyle(
+              fontSize: 28.0,
             ),
-            ],
-        ),
-        ),
-      );
+          )
+      ),
+    );
     }
 
-    void buttonPressed(){
-      showDialog(
-        context:context,
-        builder: (BuildContext context) => SimpleDialog(
-          title: const Text('Select assiganment'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  onPressed: () => Navigator.pop<String>(context, 'One'),
-                  child: const Text('One'),
-                ),
-                SimpleDialogOption(
-                  onPressed: () => Navigator.pop<String>(context, 'Two'),
-                  child: const Text('Two'),
-                ),
-                SimpleDialogOption(
-                  onPressed: () => Navigator.pop<String>(context, 'Three'),
-                  child: const Text('Three'),
-                ),
-              ],
-          ),
-        ).then<void>((value) => resultAlert(value));
+    void iconPressedA() {
+      _message = 'tap "android".';
+      _star++;
+      update();
+    }
+    void iconPressedB() {
+      _message = 'tap "favorite".';
+      _star--;
+      update();
     }
 
-    void resultAlert(String value) {
-      setState((){
-        _message = 'selected: $value';
+    void update() {
+      _star = _star < 0 ? 0 : _star > 5 ? 5 : _star;
+      setState(() {
+        _stars = '★★★★★☆☆☆☆☆'.substring(5 - _star, 5 - _star + 5);
+        _message = _message + '[$_star]';
       });
     }
 }
