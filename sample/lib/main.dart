@@ -1,96 +1,124 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(new MyApp());
+  runApp(const MyApp());
 }
+
+class TodoItem {
+  String title;
+  bool isDone;
+
+  TodoItem({required this.title, this.isDone = false});
+}
+
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Generated App',
-      theme: new ThemeData(
-        primarySwatch: Colors.pink,
-        primaryColor: const Color(0xFFe91e63),
-      
-        canvasColor: const Color(0xFFfafafa),
+    return MaterialApp(
+      title: 'Todoアプリ',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
       ),
-      home: new MyHomePage(),
+      home: const TodoHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key}) : super(key: key);
+class TodoHomePage extends StatefulWidget {
+  const TodoHomePage({super.key});
+
   @override
-  _MyHomePageState createState() => new _MyHomePageState();
+  State<TodoHomePage> createState() => _TodoHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  static var _message = 'ok.';
-  static var _stars = '☆☆☆☆☆';
-  static var _star = 0;
-    @override
-    Widget build(BuildContext context) {
-      return  Scaffold(
-        appBar:  AppBar(
-          title:  Text('My App'),
-          leading: BackButton(
-            color: Colors.white,
-          ),
+class _TodoHomePageState extends State<TodoHomePage> {
+  final TextEditingController _controller = TextEditingController();
+  final List<TodoItem> _tasks = [];
 
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.android),
-              tooltip: 'add star...',
-              onPressed: iconPressedA,
-              ),
-             IconButton(
-              icon: Icon(Icons.favorite),
-              tooltip: 'subtract star...',
-              onPressed: iconPressedB,
-              ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(30.0),
-            child: Center(
-              child: Text(_stars,
-                style: TextStyle(
-                  fontSize: 22.0,
-                  color: Colors.white,
+  void _addTask() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _tasks.add(TodoItem(title: text));
+      _controller.clear();
+    });
+  }
+
+  void _toggleTask(int index) {
+    setState(() {
+      _tasks[index].isDone = !_tasks[index].isDone;
+    });
+  }
+
+  void _deleteTask(int index) {
+    setState(() {
+      _tasks.removeAt(index);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Todoアプリ'),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: 'タスクを入力',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _addTask,
+                  child: const Text('追加'),
+                ),
+              ],
             ),
-        ),
-
-        body: Center(
-          child: Text(
-            _message,
-            style: const TextStyle(
-              fontSize: 28.0,
-            ),
-          )
+          ),
+          Expanded(
+            child: _tasks.isEmpty
+                ? const Center(child: Text('タスクはありません'))
+                : ListView.builder(
+                    itemCount: _tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = _tasks[index];
+                      return ListTile(
+                        leading: Checkbox(
+                          value: task.isDone,
+                          onChanged: (_) => _toggleTask(index),
+                        ),
+                        title: Text(
+                          task.title,
+                          style: TextStyle(
+                            decoration: task.isDone
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => _deleteTask(index),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
-    }
-
-    void iconPressedA() {
-      _message = 'tap "android".';
-      _star++;
-      update();
-    }
-    void iconPressedB() {
-      _message = 'tap "favorite".';
-      _star--;
-      update();
-    }
-
-    void update() {
-      _star = _star < 0 ? 0 : _star > 5 ? 5 : _star;
-      setState(() {
-        _stars = '★★★★★☆☆☆☆☆'.substring(5 - _star, 5 - _star + 5);
-        _message = _message + '[$_star]';
-      });
-    }
+  }
 }
