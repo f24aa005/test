@@ -4,13 +4,6 @@ void main() {
   runApp(const MyApp());
 }
 
-class TodoItem {
-  String title;
-  bool isDone;
-
-  TodoItem({required this.title, this.isDone = false});
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -19,37 +12,35 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Todoアプリ',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: const TodoHomePage(),
+      home: const TodoPage(),
     );
   }
 }
 
-class TodoHomePage extends StatefulWidget {
-  const TodoHomePage({super.key});
+class TodoPage extends StatefulWidget {
+  const TodoPage({super.key});
 
   @override
-  State<TodoHomePage> createState() => _TodoHomePageState();
+  State<TodoPage> createState() => _TodoPageState();
 }
 
-class _TodoHomePageState extends State<TodoHomePage> {
+class _TodoPageState extends State<TodoPage> {
   final TextEditingController _controller = TextEditingController();
-  final List<TodoItem> _tasks = [];
+  final List<Map<String, dynamic>> _tasks = [];
 
   void _addTask() {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
+    if (_controller.text.isEmpty) return;
     setState(() {
-      _tasks.add(TodoItem(title: text));
+      _tasks.add({'title': _controller.text, 'done': false});
       _controller.clear();
     });
   }
 
-  void _toggleTask(int index) {
+  void _toggleDone(int index) {
     setState(() {
-      _tasks[index].isDone = !_tasks[index].isDone;
+      _tasks[index]['done'] = !_tasks[index]['done'];
     });
   }
 
@@ -63,20 +54,19 @@ class _TodoHomePageState extends State<TodoHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Todoアプリ'),
-        centerTitle: true,
+        title: const Text('Todoリスト'),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     decoration: const InputDecoration(
-                      hintText: 'タスクを入力',
+                      labelText: '新しいタスク',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -90,32 +80,30 @@ class _TodoHomePageState extends State<TodoHomePage> {
             ),
           ),
           Expanded(
-            child: _tasks.isEmpty
-                ? const Center(child: Text('タスクはありません'))
-                : ListView.builder(
-                    itemCount: _tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = _tasks[index];
-                      return ListTile(
-                        leading: Checkbox(
-                          value: task.isDone,
-                          onChanged: (_) => _toggleTask(index),
-                        ),
-                        title: Text(
-                          task.title,
-                          style: TextStyle(
-                            decoration: task.isDone
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _deleteTask(index),
-                        ),
-                      );
-                    },
+            child: ListView.builder(
+              itemCount: _tasks.length,
+              itemBuilder: (context, index) {
+                final task = _tasks[index];
+                return ListTile(
+                  leading: Checkbox(
+                    value: task['done'],
+                    onChanged: (value) => _toggleDone(index),
                   ),
+                  title: Text(
+                    task['title'],
+                    style: TextStyle(
+                      decoration: task['done']
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                    ),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _deleteTask(index),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
