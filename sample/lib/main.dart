@@ -1,7 +1,29 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+class TodoItem {
+  String title;
+  bool isDone;
+
+  TodoItem({required this.title, this.isDone = false});
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'isDone': isDone,
+      };
+
+  static TodoItem fromJson(Map<String, dynamic> json) {
+    return TodoItem(
+      title: json['title'],
+      isDone: json['isDone'],
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -10,63 +32,96 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todoアプリ',
+      title: 'Todoファイル保存版',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
       ),
-      home: const TodoPage(),
+      home: const TodoHomePage(),
     );
   }
 }
 
-class TodoPage extends StatefulWidget {
-  const TodoPage({super.key});
+class TodoHomePage extends StatefulWidget {
+  const TodoHomePage({super.key});
 
   @override
-  State<TodoPage> createState() => _TodoPageState();
+  State<TodoHomePage> createState() => _TodoHomePageState();
 }
 
-class _TodoPageState extends State<TodoPage> {
+class _TodoHomePageState extends State<TodoHomePage> {
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, dynamic>> _tasks = [];
+  List<TodoItem> _tasks = [];
+  late File _file;
 
-  void _addTask() {
-    if (_controller.text.isEmpty) return;
-    setState(() {
-      _tasks.add({'title': _controller.text, 'done': false});
-      _controller.clear();
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadFile().then((_) => _loadTasks());
   }
 
-  void _toggleDone(int index) {
+  Future<void> _loadFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    _file = File('${directory.path}/todo.json');
+  }
+
+  Future<void> _loadTasks() async {
+    if (await _file.exists()) {
+      final contents = await _file.readAsString();
+      final List<dynamic> jsonList = json.decode(contents);
+      setState(() {
+        _tasks = jsonList.map((e) => TodoItem.fromJson(e)).toList();
+      });
+    }
+  }
+
+  Future<void> _saveTasks() async {
+    final jsonList = _tasks.map((e) => e.toJson()).toList();
+    await _file.writeAsString(json.encode(jsonList));
+  }
+
+  void _addTask() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
     setState(() {
-      _tasks[index]['done'] = !_tasks[index]['done'];
+      _tasks.add(TodoItem(title: text));
+      _controller.clear();
     });
+    _saveTasks();
+  }
+
+  void _toggleTask(int index) {
+    setState(() {
+      _tasks[index].isDone = !_tasks[index].isDone;
+    });
+    _saveTasks();
   }
 
   void _deleteTask(int index) {
     setState(() {
       _tasks.removeAt(index);
     });
+    _saveTasks();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Todoリスト'),
+        title: const Text('ファイル保存対応 Todoアプリ'),
+        centerTitle: true,
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     decoration: const InputDecoration(
-                      labelText: '新しいタスク',
+                      hintText: 'タスクを入力',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -80,30 +135,32 @@ class _TodoPageState extends State<TodoPage> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: _tasks.length,
-              itemBuilder: (context, index) {
-                final task = _tasks[index];
-                return ListTile(
-                  leading: Checkbox(
-                    value: task['done'],
-                    onChanged: (value) => _toggleDone(index),
+            child: _tasks.isEmpty
+                ? const Center(child: Text('タスクはありません'))
+                : ListView.builder(
+                    itemCount: _tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = _tasks[index];
+                      return ListTile(
+                        leading: Checkbox(
+                          value: task.isDone,
+                          onChanged: (_) => _toggleTask(index),
+                        ),
+                        title: Text(
+                          task.title,
+                          style: TextStyle(
+                            decoration: task.isDone
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => _deleteTask(index),
+                        ),
+                      );
+                    },
                   ),
-                  title: Text(
-                    task['title'],
-                    style: TextStyle(
-                      decoration: task['done']
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                    ),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteTask(index),
-                  ),
-                );
-              },
-            ),
           ),
         ],
       ),
